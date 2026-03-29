@@ -2,9 +2,20 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:weather_app/hourly_forecast_item.dart';
 import 'package:weather_app/additional_info_item.dart';
+import 'package:http/http.dart' as http;
+import 'package:weather_app/secrets.dart';
 
 class WeatherScreen extends StatelessWidget {
   const WeatherScreen({super.key});
+
+  Future getCurrentWeather() async {
+    String cityName = 'Kolkata';
+    final res = await http.get(
+      Uri.parse(
+        'https://api.weatherapi.com/v1/current.json?key=$WeatherAPIKey&q=$cityName',
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +35,7 @@ class WeatherScreen extends StatelessWidget {
           ),
         ],
       ),
+
       body: Container(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
@@ -65,6 +77,7 @@ class WeatherScreen extends StatelessWidget {
                   ),
                 ),
               ),
+
               const SizedBox(height: 25),
               const Text(
                 "Weather Forecast",
@@ -74,11 +87,31 @@ class WeatherScreen extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    HourlyForecastItem(),
-                    HourlyForecastItem(),
-                    HourlyForecastItem(),
-                    HourlyForecastItem(),
-                    HourlyForecastItem(),
+                    HourlyForecastItem(
+                      forecastData: '301.22',
+                      forecastIcon: Icons.cloud,
+                      forecastTime: '00:00',
+                    ),
+                    HourlyForecastItem(
+                      forecastData: '315.45',
+                      forecastIcon: Icons.wb_sunny,
+                      forecastTime: '03:00',
+                    ),
+                    HourlyForecastItem(
+                      forecastData: '300.52',
+                      forecastIcon: Icons.cloud,
+                      forecastTime: '06:00',
+                    ),
+                    HourlyForecastItem(
+                      forecastData: '305.89',
+                      forecastIcon: Icons.wb_sunny,
+                      forecastTime: '09:00',
+                    ),
+                    HourlyForecastItem(
+                      forecastData: '300.07',
+                      forecastIcon: Icons.cloud,
+                      forecastTime: '12:00',
+                    ),
                   ],
                 ),
               ),
