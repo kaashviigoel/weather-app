@@ -14,10 +14,12 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
+  late Future<Map<String, dynamic>> weather;
+
   @override
   void initState() {
     super.initState();
-    getCurrentWeather();
+    weather = getCurrentWeather();
   }
 
   Future<Map<String, dynamic>> getCurrentWeather() async {
@@ -52,7 +54,9 @@ class _WeatherScreenState extends State<WeatherScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              print("Refresh weather data");
+              setState(() {
+                weather = getCurrentWeather();
+              });
             },
           ),
         ],
