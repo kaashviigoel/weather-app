@@ -14,15 +14,13 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
-  double temp = 0.0;
-
   @override
   void initState() {
     super.initState();
     getCurrentWeather();
   }
 
-  Future getCurrentWeather() async {
+  Future<Map<String, dynamic>> getCurrentWeather() async {
     try {
       String cityName = 'Kolkata';
       final res = await http.get(
@@ -31,11 +29,11 @@ class _WeatherScreenState extends State<WeatherScreen> {
         ),
       );
       final data = jsonDecode(res.body);
-      temp = data['current']['temp_c'];
       if (res.statusCode != 200) {
         final e = res.statusCode;
         throw Exception(e);
       }
+      return data;
     } catch (e) {
       throw 'Error fetching weather data';
     }
@@ -63,6 +61,22 @@ class _WeatherScreenState extends State<WeatherScreen> {
       body: FutureBuilder(
         future: getCurrentWeather(),
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator.adaptive());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error.toString()}'));
+          }
+
+          final weatherData = snapshot.data!;
+          final currentTemp = weatherData['current']['temp_c'];
+          final currentSky = weatherData['current']['condition']['text'];
+          final humidity = weatherData['current']['humidity'];
+          final windspeed = weatherData['current']['wind_kph'];
+          final pressure = weatherData['current']['pressure_mb'];
+          final hourly = weatherData['forecast']['forecastday'][0]['hour'];
+
           return Container(
             padding: EdgeInsets.all(16),
             child: SingleChildScrollView(
@@ -87,17 +101,19 @@ class _WeatherScreenState extends State<WeatherScreen> {
                               mainAxisSize: MainAxisSize.max,
                               children: [
                                 Text(
-                                  '$temp°C',
+                                  '$currentTemp°C',
                                   style: const TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                const Icon(Icons.cloud, size: 64),
+                                currentSky == 'Sunny' || currentSky == 'Clear'
+                                    ? const Icon(Icons.wb_sunny, size: 64)
+                                    : const Icon(Icons.cloud, size: 64),
                                 const SizedBox(height: 16),
-                                const Text(
-                                  'Rain',
+                                Text(
+                                  '$currentSky',
                                   style: TextStyle(fontSize: 20),
                                 ),
                               ],
@@ -110,39 +126,28 @@ class _WeatherScreenState extends State<WeatherScreen> {
 
                   const SizedBox(height: 25),
                   const Text(
-                    "Weather Forecast",
+                    "Hourly Forecast",
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        HourlyForecastItem(
-                          forecastData: '301.22',
-                          forecastIcon: Icons.cloud,
-                          forecastTime: '00:00',
-                        ),
-                        HourlyForecastItem(
-                          forecastData: '315.45',
-                          forecastIcon: Icons.wb_sunny,
-                          forecastTime: '03:00',
-                        ),
-                        HourlyForecastItem(
-                          forecastData: '300.52',
-                          forecastIcon: Icons.cloud,
-                          forecastTime: '06:00',
-                        ),
-                        HourlyForecastItem(
-                          forecastData: '305.89',
-                          forecastIcon: Icons.wb_sunny,
-                          forecastTime: '09:00',
-                        ),
-                        HourlyForecastItem(
-                          forecastData: '300.07',
-                          forecastIcon: Icons.cloud,
-                          forecastTime: '12:00',
-                        ),
-                      ],
+
+                  SizedBox(
+                    height: 120,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (int i = 0; i < 24; i += 6)
+                            HourlyForecastItem(
+                              forecastData: hourly[i]['temp_c'],
+                              forecastIcon:
+                                  hourly[i]['condition']['text'] == 'Sunny' ||
+                                      hourly[i]['condition']['text'] == 'Clear'
+                                  ? Icons.wb_sunny
+                                  : Icons.cloud,
+                              forecastTime: hourly[i]['time'].split(' ')[1],
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 25),
@@ -157,17 +162,17 @@ class _WeatherScreenState extends State<WeatherScreen> {
                       AdditionalInfoItem(
                         infoType: 'Humidity',
                         infoIcon: Icons.water_drop,
-                        infoValue: '94',
+                        infoValue: '$humidity%',
                       ),
                       AdditionalInfoItem(
                         infoType: 'Wind Speed',
                         infoIcon: Icons.air,
-                        infoValue: '7.67',
+                        infoValue: '$windspeed kph',
                       ),
                       AdditionalInfoItem(
                         infoType: 'Pressure',
                         infoIcon: Icons.beach_access,
-                        infoValue: '1006',
+                        infoValue: '$pressure mb',
                       ),
                     ],
                   ),
